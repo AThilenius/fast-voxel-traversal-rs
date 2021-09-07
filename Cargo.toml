@@ -1,0 +1,13 @@
+[package]
+name = "fast-voxel-traversal"
+description = "Fast voxel traversal iterators for both 2D and 3D"
+authors = ["Alec Thilenius <alec@thilenius.com>"]
+edition = "2018"
+keywords = ["voxel", "raycasting", "raymarching", "traversal", "query"]
+license = "MIT"
+readme = "README.md"
+repository = "https://gitlab.com/athilenius/fast-voxel-traversal-rs"
+version = "0.4.0"
+
+[dependencies]
+glam = "0.18"
