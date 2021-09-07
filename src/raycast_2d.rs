@@ -2,7 +2,7 @@ use glam::{IVec2, Vec2};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct BoundingVolume2 {
-    pub size: IVec2,
+    pub size: (i32, i32),
 }
 
 impl BoundingVolume2 {
@@ -12,22 +12,22 @@ impl BoundingVolume2 {
 
     #[inline(always)]
     pub(crate) fn contains_point(&self, point: IVec2) -> bool {
-        point.cmpge(IVec2::ZERO).all() && point.cmplt(self.size).all()
+        point.cmpge(IVec2::ZERO).all() && point.cmplt(self.size.into()).all()
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray2 {
-    pub origin: Vec2,
-    pub direction: Vec2,
+    pub origin: (f32, f32),
+    pub direction: (f32, f32),
     pub length: f32,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray2hit {
     pub distance: f32,
-    pub voxel: IVec2,
-    pub normal: Option<IVec2>,
+    pub voxel: (i32, i32),
+    pub normal: Option<(i32, i32)>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -47,10 +47,10 @@ pub struct VoxelRay2Iterator {
 // Based on https://github.com/fenomas/fast-voxel-raycast/blob/master/index.js
 impl VoxelRay2Iterator {
     pub fn new(volume: BoundingVolume2, ray: Ray2) -> Self {
-        let mut p = ray.origin;
+        let mut p = Vec2::from(ray.origin);
 
         // Normalize direction vector
-        let d = ray.direction.normalize();
+        let d = Vec2::from(ray.direction).normalize();
 
         // How long we have traveled thus far (modified by initial 'jump to volume bounds').
         let mut t = 0.0;
@@ -79,7 +79,10 @@ impl VoxelRay2Iterator {
 
         // Max distance we can travel. This is either the ray length, or the current `t` plus the
         // corner to corner length of the voxel volume.
-        let max_d = f32::min(ray.length, t + volume.size.as_vec2().length() + 2.0);
+        let max_d = f32::min(
+            ray.length,
+            t + IVec2::from(volume.size).as_vec2().length() + 2.0,
+        );
 
         // The starting voxel for the raycast.
         let i = p.floor().as_ivec2();
@@ -158,8 +161,8 @@ impl Iterator for VoxelRay2Iterator {
             if self.volume.contains_point(self.i) {
                 hit = Some(Ray2hit {
                     distance: self.t,
-                    voxel: self.i,
-                    normal: self.norm,
+                    voxel: self.i.into(),
+                    normal: self.norm.map(|n| n.into()),
                 });
             }
 
@@ -193,7 +196,7 @@ fn test_aabb_of_chunk(
     distance: f32,
 ) -> Option<Vec2> {
     let min = Vec2::ZERO;
-    let max = volume.size.as_vec2();
+    let max = IVec2::from(volume.size).as_vec2();
     let mut t = Vec2::ZERO;
 
     for i in 0..2 {

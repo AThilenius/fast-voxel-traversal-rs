@@ -1,19 +1,16 @@
 use fast_voxel_traversal::raycast_3d::*;
-use glam::{IVec3, Vec3};
 
 fn main() {
     // Create a bounding volume. Volmes always start at (0, 0, 0) with a given size. This doesn't
     // actually allocate a volume, it just stores the size. If you need to query a voxel volume that
     // doesn't start a (0, 0, 0), simply subtract the offset from the ray's origin, then add the
     // offset back in during each traversal iteration.
-    let volume = BoundingVolume3 {
-        size: IVec3::ONE * 8,
-    };
+    let volume = BoundingVolume3 { size: (8, 8, 8) };
 
     // Create a ray that we will intersect with our voxels.
     let ray = Ray3 {
-        origin: -Vec3::ONE * 10.0,
-        direction: Vec3::ONE,
+        origin: (-10.0, -10.0, -10.0),
+        direction: (1.0, 1.0, 1.0),
         length: 100.0,
     };
 
@@ -30,15 +27,12 @@ fn main() {
         // The distance from the ray origin this hit occured.
         let _distance = hit.distance;
 
-        // The world space hit point is easy to compute from this, if you need it:
-        let _world_space_hit_point = ray.origin + (ray.direction * hit.distance);
-
         println!("{:?}", hit);
     }
 
     let ray_doesnt_intersect = Ray3 {
-        origin: -Vec3::ONE,
-        direction: Vec3::X,
+        origin: (-1.0, -1.0, -1.0),
+        direction: (1.0, 0.0, 0.0),
         length: f32::INFINITY,
     };
 

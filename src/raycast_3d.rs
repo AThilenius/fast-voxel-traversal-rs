@@ -2,7 +2,7 @@ use glam::{IVec3, Vec3};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct BoundingVolume3 {
-    pub size: IVec3,
+    pub size: (i32, i32, i32),
 }
 
 impl BoundingVolume3 {
@@ -12,22 +12,22 @@ impl BoundingVolume3 {
 
     #[inline(always)]
     pub(crate) fn contains_point(&self, point: IVec3) -> bool {
-        point.cmpge(IVec3::ZERO).all() && point.cmplt(self.size).all()
+        point.cmpge(IVec3::ZERO).all() && point.cmplt(self.size.into()).all()
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray3 {
-    pub origin: Vec3,
-    pub direction: Vec3,
+    pub origin: (f32, f32, f32),
+    pub direction: (f32, f32, f32),
     pub length: f32,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray3hit {
     pub distance: f32,
-    pub voxel: IVec3,
-    pub normal: Option<IVec3>,
+    pub voxel: (i32, i32, i32),
+    pub normal: Option<(i32, i32, i32)>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -47,10 +47,10 @@ pub struct VoxelRay3Iterator {
 // Based on https://github.com/fenomas/fast-voxel-raycast/blob/master/index.js
 impl VoxelRay3Iterator {
     pub fn new(volume: BoundingVolume3, ray: Ray3) -> Self {
-        let mut p = ray.origin;
+        let mut p = Vec3::from(ray.origin);
 
         // Normalize direction vector
-        let d = ray.direction.normalize();
+        let d = Vec3::from(ray.direction).normalize();
 
         // How long we have traveled thus far (modified by initial 'jump to volume bounds').
         let mut t = 0.0;
@@ -79,7 +79,10 @@ impl VoxelRay3Iterator {
 
         // Max distance we can travel. This is either the ray length, or the current `t` plus the
         // corner to corner length of the voxel volume.
-        let max_d = f32::min(ray.length, t + volume.size.as_vec3().length() + 2.0);
+        let max_d = f32::min(
+            ray.length,
+            t + IVec3::from(volume.size).as_vec3().length() + 2.0,
+        );
 
         // The starting voxel for the raycast.
         let i = p.floor().as_ivec3();
@@ -173,8 +176,8 @@ impl Iterator for VoxelRay3Iterator {
             if self.volume.contains_point(self.i) {
                 hit = Some(Ray3hit {
                     distance: self.t,
-                    voxel: self.i,
-                    normal: self.norm,
+                    voxel: self.i.into(),
+                    normal: self.norm.map(|n| n.into()),
                 });
             }
 
@@ -222,7 +225,7 @@ fn test_aabb_of_chunk(
     distance: f32,
 ) -> Option<Vec3> {
     let min = Vec3::ZERO;
-    let max = volume.size.as_vec3();
+    let max = IVec3::from(volume.size).as_vec3();
     let mut t = Vec3::ZERO;
 
     for i in 0..3 {
